@@ -202,7 +202,7 @@ const deleteAll = async (funcLogger, collectionName, filter) => {
 
   logger.debug({ collectionName, filter }, 'Deleting documents from MongoDB');
   const collection = database.collection(collectionName);
-  const result = collection.deleteMany(filter, {
+  const result = await collection.deleteMany(filter, {
     // https://docs.mongodb.com/v3.2/reference/write-concern/
     writeConcern: {
       w: 0,
@@ -228,7 +228,7 @@ const deleteOne = async (funcLogger, collectionName, filter) => {
 
   logger.debug({ collectionName, filter }, 'Deleting document from MongoDB');
   const collection = database.collection(collectionName);
-  const result = collection.deleteOne(filter, {
+  const result = await collection.deleteOne(filter, {
     // https://docs.mongodb.com/v3.2/reference/write-concern/
     writeConcern: {
       w: 0,
@@ -257,7 +257,7 @@ const createIndex = async (funcLogger, collectionName, keys, options) => {
     'Creating index from MongoDB'
   );
   const collection = database.collection(collectionName);
-  const result = collection.createIndex(keys, options);
+  const result = await collection.createIndex(keys, options);
   logger.debug({ result }, 'Created index from MongoDB');
 
   return result;
@@ -276,7 +276,7 @@ const dropIndex = async (funcLogger, collectionName, indexName) => {
 
   logger.debug({ collectionName, indexName }, 'Dropping index from MongoDB');
   const collection = database.collection(collectionName);
-  const result = collection.dropIndex(indexName);
+  const result = await collection.dropIndex(indexName);
   logger.debug({ result }, 'Dropped index from MongoDB');
 
   return result;

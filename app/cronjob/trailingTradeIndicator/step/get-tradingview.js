@@ -36,7 +36,7 @@ const retrieveTradingView = async (logger, symbols, interval) => {
       paramsSerializer:
         /* istanbul ignore next */
         p => qs.stringify(p, { arrayFormat: 'repeat' }),
-      timeout: 20000 // timeout 20 seconds
+      timeout: 15000 // timeout 15 seconds (must be shorter than the 20s cronjob limit)
     });
     const tradingViewResult = _.get(response.data, 'result', {});
 

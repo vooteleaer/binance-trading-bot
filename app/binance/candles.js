@@ -3,6 +3,7 @@ const _ = require('lodash');
 const queue = require('../cronjob/trailingTradeHelper/queue');
 const { executeTrailingTrade } = require('../cronjob/index');
 const { binance, mongo } = require('../helpers');
+const { errorHandlerWrapper } = require('../error-handler');
 const {
   getConfiguration
 } = require('../cronjob/trailingTradeHelper/configuration');
@@ -45,15 +46,17 @@ const setupCandlesWebsocket = async (logger, symbols) => {
       symbolsGroup,
       candleInterval,
       candle => {
-        saveCandle(logger, 'trailing-trade-candles', {
-          key: candle.symbol,
-          interval: candle.interval,
-          time: +candle.startTime,
-          open: +candle.open,
-          high: +candle.high,
-          low: +candle.low,
-          close: +candle.close,
-          volume: +candle.volume
+        errorHandlerWrapper(logger, 'Candles', async () => {
+          await saveCandle(logger, 'trailing-trade-candles', {
+            key: candle.symbol,
+            interval: candle.interval,
+            time: +candle.startTime,
+            open: +candle.open,
+            high: +candle.high,
+            low: +candle.low,
+            close: +candle.close,
+            volume: +candle.volume
+          });
         });
       }
     );

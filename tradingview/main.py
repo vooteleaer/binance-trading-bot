@@ -2,11 +2,22 @@ import logging
 import sys
 import colorlog
 import os
+import time
+import threading
 
 from flask import Flask, jsonify, request
 from tradingview_ta import get_multiple_analysis
 
 app = Flask(__name__)
+
+# In-memory cache to avoid hammering TradingView on every 1-second cronjob tick.
+# The Node.js side calls this endpoint every second, but TradingView data only
+# changes meaningfully on the candle interval (minutes). Caching for 55 seconds
+# also prevents thread-pool exhaustion in the Waitress WSGI server, where each
+# blocking get_multiple_analysis() call occupies a worker thread.
+_cache = {}
+_cache_lock = threading.Lock()
+CACHE_TTL_SECONDS = 55
 
 logger = logging.getLogger('')
 logger.setLevel(os.environ.get("BINANCE_TRADINGVIEW_LOG_LEVEL", logging.DEBUG))
@@ -23,6 +34,16 @@ def index():
     screener = request.args.get('screener')
     interval = request.args.get('interval')
 
+    # Cache key: order of symbols doesn't matter semantically, so sort them.
+    cache_key = f"{screener}:{interval}:{','.join(sorted(symbols))}"
+    now = time.time()
+
+    with _cache_lock:
+        cached = _cache.get(cache_key)
+        if cached and (now - cached['time']) < CACHE_TTL_SECONDS:
+            logger.info("Cache hit for " + cache_key)
+            return jsonify(cached['response'])
+
     analyse = get_multiple_analysis(
         screener, interval, symbols
     )
@@ -35,7 +56,6 @@ def index():
                 'summary': symbolAnalyse.summary, 'time': symbolAnalyse.time.isoformat(), 'oscillators': symbolAnalyse.oscillators, 'moving_averages': symbolAnalyse.moving_averages, 'indicators': symbolAnalyse.indicators}
         else:
             result[symbol] = {}
-        # logger.info('Processed '+symbol)
 
     response = {
         'request': {
@@ -45,6 +65,10 @@ def index():
         },
         'result': result
     }
+
+    with _cache_lock:
+        _cache[cache_key] = {'time': now, 'response': response}
+
     logger.info("Response: "+str(response))
     return jsonify(response)
 

@@ -115,16 +115,19 @@ const completeJob = async (funcLogger, symbol, _jobPayload) => {
 const execute = async (funcLogger, symbol, jobPayload = {}) => {
   const logger = funcLogger.child({ helper: 'queue' });
 
-  // Use chain of responsibilities pattern to handle the job execution.
-  // eslint-disable-next-line no-restricted-syntax
-  for (const executeFn of [prepareJob, executeJob, completeJob]) {
-    // eslint-disable-next-line no-await-in-loop
-    const result = await executeFn(logger, symbol, jobPayload);
+  await prepareJob(logger, symbol, jobPayload);
 
-    if (result) {
-      logger.info({ symbol }, 'Queue job execution completed.');
-      break;
-    }
+  // Always call completeJob via finally so the per-symbol counter is never
+  // left in a stuck state (startedJobs > finishedJobs) if executeJob throws.
+  // The old for-loop over [prepareJob, executeJob, completeJob] would skip
+  // completeJob entirely on an exception, deadlocking that symbol's queue.
+  try {
+    await executeJob(logger, symbol, jobPayload);
+  } catch (err) {
+    logger.error({ symbol, err }, 'Queue job execution failed');
+  } finally {
+    await completeJob(logger, symbol, jobPayload);
+    logger.info({ symbol }, 'Queue job execution completed.');
   }
 };
 

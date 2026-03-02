@@ -4,6 +4,7 @@ const {
   getConfiguration
 } = require('../cronjob/trailingTradeHelper/configuration');
 const { saveCandle } = require('../cronjob/trailingTradeHelper/common');
+const { errorHandlerWrapper } = require('../error-handler');
 
 let websocketATHCandlesClean = {};
 
@@ -36,7 +37,9 @@ const setupATHCandlesWebsocket = async (logger, symbols) => {
     } = symbolConfiguration;
 
     if (buyATHRestrictionEnabled === false) {
-      return;
+      // Skip this symbol only — do NOT return, which would abort all remaining symbols.
+      // eslint-disable-next-line no-continue
+      continue;
     }
 
     if (!athSymbolsGroupedByIntervals[buyATHRestrictionCandlesInterval]) {
@@ -48,20 +51,22 @@ const setupATHCandlesWebsocket = async (logger, symbols) => {
 
   _.forEach(
     athSymbolsGroupedByIntervals,
-    async (symbolsGroup, candleInterval) => {
+    (symbolsGroup, candleInterval) => {
       websocketATHCandlesClean[candleInterval] = binance.client.ws.candles(
         symbolsGroup,
         candleInterval,
         candle => {
-          saveCandle(logger, 'trailing-trade-ath-candles', {
-            key: candle.symbol,
-            interval: candle.interval,
-            time: +candle.startTime,
-            open: +candle.open,
-            high: +candle.high,
-            low: +candle.low,
-            close: +candle.close,
-            volume: +candle.volume
+          errorHandlerWrapper(logger, 'ATH Candles', async () => {
+            await saveCandle(logger, 'trailing-trade-ath-candles', {
+              key: candle.symbol,
+              interval: candle.interval,
+              time: +candle.startTime,
+              open: +candle.open,
+              high: +candle.high,
+              low: +candle.low,
+              close: +candle.close,
+              volume: +candle.volume
+            });
           });
         }
       );
