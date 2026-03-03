@@ -10,7 +10,7 @@ class Status extends React.Component {
       streamsCount
     } = this.props;
 
-    if (!apiInfo) {
+    if (!apiInfo || !apiInfo.spot) {
       return '';
     }
 
