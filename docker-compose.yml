@@ -27,7 +27,7 @@ services:
       - BINANCE_TRADINGVIEW_HOST=tradingview
       - BINANCE_TRADINGVIEW_PORT=8082
     ports:
-      - 8080:80
+      - 80:80
     logging:
       driver: 'json-file'
       options:
