@@ -1,8 +1,10 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-# Execute lint-staged
-npx lint-staged
+# Execute lint-staged only when JS files are staged
+if git diff --cached --name-only | grep -q '\.js$'; then
+  npx lint-staged
+fi
 
 # Validate branch name
 npx branch-name-lint .branch-name-list.json

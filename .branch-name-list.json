@@ -24,8 +24,8 @@
       "reverting": "revert"
     },
     "banned": ["wip"],
-    "skip": ["development", "staging"],
-    "disallowed": ["master", "main"],
+    "skip": ["development", "staging", "master", "main"],
+    "disallowed": [],
     "separator": "/",
     "msgBranchBanned": "Branches with the name \"%s\" are not allowed.",
     "msgBranchDisallowed": "Pushing to \"%s\" is not allowed, use git-flow.",
