@@ -44,9 +44,16 @@ def index():
             logger.info("Cache hit for " + cache_key)
             return jsonify(cached['response'])
 
-    analyse = get_multiple_analysis(
-        screener, interval, symbols
-    )
+    try:
+        analyse = get_multiple_analysis(
+            screener, interval, symbols
+        )
+    except Exception as e:
+        logger.error(f"get_multiple_analysis failed: {e}")
+        return jsonify({
+            'request': {'symbols': symbols, 'screener': screener, 'interval': interval},
+            'result': {}
+        }), 503
 
     result = {}
     for symbol in symbols:
