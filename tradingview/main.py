@@ -18,6 +18,7 @@ app = Flask(__name__)
 _cache = {}
 _cache_lock = threading.Lock()
 CACHE_TTL_SECONDS = 55
+ERROR_CACHE_TTL_SECONDS = 30  # Back-off when TradingView API returns empty responses
 
 logger = logging.getLogger('')
 logger.setLevel(os.environ.get("BINANCE_TRADINGVIEW_LOG_LEVEL", logging.DEBUG))
@@ -40,9 +41,11 @@ def index():
 
     with _cache_lock:
         cached = _cache.get(cache_key)
-        if cached and (now - cached['time']) < CACHE_TTL_SECONDS:
-            logger.info("Cache hit for " + cache_key)
-            return jsonify(cached['response'])
+        if cached:
+            ttl = ERROR_CACHE_TTL_SECONDS if cached.get('error') else CACHE_TTL_SECONDS
+            if (now - cached['time']) < ttl:
+                logger.info("Cache hit for " + cache_key)
+                return jsonify(cached['response']), (503 if cached.get('error') else 200)
 
     try:
         analyse = get_multiple_analysis(
@@ -50,10 +53,13 @@ def index():
         )
     except Exception as e:
         logger.error(f"get_multiple_analysis failed: {e}")
-        return jsonify({
+        error_response = {
             'request': {'symbols': symbols, 'screener': screener, 'interval': interval},
             'result': {}
-        }), 503
+        }
+        with _cache_lock:
+            _cache[cache_key] = {'time': now, 'response': error_response, 'error': True}
+        return jsonify(error_response), 503
 
     result = {}
     for symbol in symbols:
