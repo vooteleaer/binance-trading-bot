@@ -13,10 +13,12 @@
         "type": "query",
         "datasource": "BinanceBot",
         "query": "symbols",
+        "definition": "symbols",
         "refresh": 2,
         "sort": 1,
         "includeAll": false,
         "multi": false,
+        "hide": 0,
         "current": {}
       }
     ]
