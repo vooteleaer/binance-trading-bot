@@ -49,29 +49,26 @@ const setupATHCandlesWebsocket = async (logger, symbols) => {
     athSymbolsGroupedByIntervals[buyATHRestrictionCandlesInterval].push(symbol);
   }
 
-  _.forEach(
-    athSymbolsGroupedByIntervals,
-    (symbolsGroup, candleInterval) => {
-      websocketATHCandlesClean[candleInterval] = binance.client.ws.candles(
-        symbolsGroup,
-        candleInterval,
-        candle => {
-          errorHandlerWrapper(logger, 'ATH Candles', async () => {
-            await saveCandle(logger, 'trailing-trade-ath-candles', {
-              key: candle.symbol,
-              interval: candle.interval,
-              time: +candle.startTime,
-              open: +candle.open,
-              high: +candle.high,
-              low: +candle.low,
-              close: +candle.close,
-              volume: +candle.volume
-            });
+  _.forEach(athSymbolsGroupedByIntervals, (symbolsGroup, candleInterval) => {
+    websocketATHCandlesClean[candleInterval] = binance.client.ws.candles(
+      symbolsGroup,
+      candleInterval,
+      candle => {
+        errorHandlerWrapper(logger, 'ATH Candles', async () => {
+          await saveCandle(logger, 'trailing-trade-ath-candles', {
+            key: candle.symbol,
+            interval: candle.interval,
+            time: +candle.startTime,
+            open: +candle.open,
+            high: +candle.high,
+            low: +candle.low,
+            close: +candle.close,
+            volume: +candle.volume
           });
-        }
-      );
-    }
-  );
+        });
+      }
+    );
+  });
 };
 
 /**
