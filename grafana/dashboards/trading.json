@@ -2,15 +2,76 @@
   "title": "Trading Analysis",
   "uid": "binance-trading",
   "schemaVersion": 38,
-  "version": 1,
+  "version": 2,
   "refresh": "5m",
   "time": { "from": "now-30d", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "symbol",
+        "label": "Symbol",
+        "type": "query",
+        "datasource": "BinanceBot",
+        "query": "symbols",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "datasource": "BinanceBot",
+        "enable": true,
+        "hide": false,
+        "iconColor": "#e0752d",
+        "name": "Completed Trades",
+        "query": "*"
+      }
+    ]
+  },
   "panels": [
+    {
+      "id": 5,
+      "title": "Price Chart — $symbol",
+      "type": "candlestick",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 12 },
+      "datasource": "BinanceBot",
+      "targets": [
+        {
+          "target": "candles_$symbol",
+          "type": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "mode": "candles+volume",
+        "candleStyle": "candles",
+        "colorStrategy": "open-close",
+        "colors": {
+          "up": "green",
+          "down": "red",
+          "flat": "gray"
+        },
+        "open": "Open",
+        "high": "High",
+        "low": "Low",
+        "close": "Close",
+        "volume": "Volume"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
     {
       "id": 1,
       "title": "Profit per Trade (USDC)",
       "type": "barchart",
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
       "datasource": "BinanceBot",
       "targets": [
         {
@@ -43,7 +104,7 @@
       "id": 2,
       "title": "Cumulative Profit (USDC)",
       "type": "timeseries",
-      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
       "datasource": "BinanceBot",
       "targets": [
         {
@@ -67,7 +128,7 @@
       "id": 3,
       "title": "Profit % per Trade",
       "type": "barchart",
-      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
       "datasource": "BinanceBot",
       "targets": [
         {
@@ -96,7 +157,7 @@
       "id": 4,
       "title": "Trade Volume (USDC)",
       "type": "timeseries",
-      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
       "datasource": "BinanceBot",
       "targets": [
         {
