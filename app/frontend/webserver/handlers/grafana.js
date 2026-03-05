@@ -86,6 +86,10 @@ const handleGrafana = async (funcLogger, app) => {
     res.json({ status: 'ok' });
   });
 
+  app.post('/grafana/variable', async (req, res) =>
+    res.json(await getSymbols(logger))
+  );
+
   app.post('/grafana/search', async (req, res) => {
     const { target } = req.body;
     if (target === 'symbols') {
