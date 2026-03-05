@@ -8,6 +8,7 @@ const { handleStatus } = require('./status');
 const { handleSymbolDelete } = require('./symbol-delete');
 const { handleBackupGet } = require('./backup-get');
 const { handleRestorePost } = require('./restore-post');
+const { handleGrafana } = require('./grafana');
 const { handle404 } = require('./404');
 
 const setHandlers = async (logger, app, { loginLimiter }) => {
@@ -21,6 +22,7 @@ const setHandlers = async (logger, app, { loginLimiter }) => {
   await handleSymbolDelete(logger, app);
   await handleBackupGet(logger, app);
   await handleRestorePost(logger, app);
+  await handleGrafana(logger, app);
   await handle404(logger, app);
 };
 

@@ -75,6 +75,7 @@ const setupTickersWebsocket = async (logger, symbols) => {
 
     websocketTickersClean[monitoringSymbol] = binance.client.ws.miniTicker(
       monitoringSymbol,
+      // eslint-disable-next-line no-loop-func
       ticker => {
         errorHandlerWrapper(logger, 'Tickers', async () => {
           // Update watchdog heartbeat on every received ticker.
