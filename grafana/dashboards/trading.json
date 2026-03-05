@@ -66,7 +66,16 @@
       },
       "fieldConfig": {
         "defaults": {},
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Volume" },
+            "properties": [
+              { "id": "custom.axisPlacement", "value": "right" },
+              { "id": "custom.axisLabel", "value": "Volume" },
+              { "id": "custom.scaleDistribution", "value": { "type": "linear" } }
+            ]
+          }
+        ]
       }
     },
     {
