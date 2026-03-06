@@ -74,6 +74,98 @@ const queryCandles = async (logger, symbol, from, to) => {
   };
 };
 
+const getOrderFillPrice = order => {
+  if (!order) return null;
+  const qty = parseFloat(order.executedQty || 0);
+  const quoteQty = parseFloat(order.cummulativeQuoteQty || 0);
+  if (qty > 0 && quoteQty > 0) return quoteQty / qty;
+  return parseFloat(order.price) || null;
+};
+
+const getOrderTime = order => {
+  if (!order) return null;
+  return order.transactTime || order.updateTime || order.time || null;
+};
+
+const queryBuyMarkers = async (logger, symbol, from, to) => {
+  const match = { symbol };
+  if (from || to) {
+    match.archivedAt = {
+      ...(from ? { $gte: from.toISOString() } : {}),
+      ...(to ? { $lte: to.toISOString() } : {})
+    };
+  }
+
+  const trades = await mongo.findAll(
+    logger,
+    'trailing-trade-grid-trade-archive',
+    match,
+    { sort: { archivedAt: 1 } }
+  );
+
+  const datapoints = [];
+
+  trades.forEach(trade => {
+    (trade.buy || [])
+      .filter(b => b.executed && b.executedOrder)
+      .forEach(b => {
+        const t = getOrderTime(b.executedOrder);
+        const price = getOrderFillPrice(b.executedOrder);
+        if (t && price) datapoints.push([price, t]);
+      });
+  });
+
+  // Include active trade buy
+  const activeGridTrade = await mongo.findOne(
+    logger,
+    'trailing-trade-grid-trade',
+    { key: symbol }
+  );
+
+  if (activeGridTrade) {
+    (activeGridTrade.buy || [])
+      .filter(b => b.executed && b.executedOrder)
+      .forEach(b => {
+        const t = getOrderTime(b.executedOrder);
+        const price = getOrderFillPrice(b.executedOrder);
+        if (t && price) datapoints.push([price, t]);
+      });
+  }
+
+  return { target: `buys_${symbol}`, datapoints };
+};
+
+const querySellMarkers = async (logger, symbol, from, to) => {
+  const match = { symbol };
+  if (from || to) {
+    match.archivedAt = {
+      ...(from ? { $gte: from.toISOString() } : {}),
+      ...(to ? { $lte: to.toISOString() } : {})
+    };
+  }
+
+  const trades = await mongo.findAll(
+    logger,
+    'trailing-trade-grid-trade-archive',
+    match,
+    { sort: { archivedAt: 1 } }
+  );
+
+  const datapoints = [];
+
+  trades.forEach(trade => {
+    (trade.sell || [])
+      .filter(s => s.executed && s.executedOrder)
+      .forEach(s => {
+        const t = getOrderTime(s.executedOrder);
+        const price = getOrderFillPrice(s.executedOrder);
+        if (t && price) datapoints.push([price, t]);
+      });
+  });
+
+  return { target: `sells_${symbol}`, datapoints };
+};
+
 const queryMetric = async (logger, target, from, to) => {
   const match = {};
   if (from || to) {
@@ -285,6 +377,14 @@ const handleGrafana = async (funcLogger, app) => {
           if (target.startsWith('candles_')) {
             const symbol = target.slice('candles_'.length);
             return queryCandles(logger, symbol, from, to);
+          }
+          if (target.startsWith('buys_')) {
+            const symbol = target.slice('buys_'.length);
+            return queryBuyMarkers(logger, symbol, from, to);
+          }
+          if (target.startsWith('sells_')) {
+            const symbol = target.slice('sells_'.length);
+            return querySellMarkers(logger, symbol, from, to);
           }
           return {
             target,

@@ -63,6 +63,16 @@
           "target": "candles_$symbol",
           "type": "table",
           "refId": "A"
+        },
+        {
+          "target": "buys_$symbol",
+          "type": "timeserie",
+          "refId": "B"
+        },
+        {
+          "target": "sells_$symbol",
+          "type": "timeserie",
+          "refId": "C"
         }
       ],
       "options": {
@@ -89,6 +99,24 @@
               { "id": "custom.axisPlacement", "value": "right" },
               { "id": "custom.axisLabel", "value": "Volume" },
               { "id": "custom.scaleDistribution", "value": { "type": "linear" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": "^buys_" },
+            "properties": [
+              { "id": "custom.drawStyle", "value": "points" },
+              { "id": "custom.pointSize", "value": 10 },
+              { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } },
+              { "id": "custom.lineWidth", "value": 0 }
+            ]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": "^sells_" },
+            "properties": [
+              { "id": "custom.drawStyle", "value": "points" },
+              { "id": "custom.pointSize", "value": 10 },
+              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
+              { "id": "custom.lineWidth", "value": 0 }
             ]
           }
         ]
