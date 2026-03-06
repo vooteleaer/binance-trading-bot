@@ -2,6 +2,7 @@ apiVersion: 1
 
 datasources:
   - name: BinanceBot
+    uid: binance-bot-json
     type: simpod-json-datasource
     access: proxy
     url: http://binance-bot/grafana
