@@ -128,9 +128,12 @@ const queryTradeAnnotations = async (logger, annotation, symbol, from, to) => {
   const annotations = trades.map(trade => {
     const buyTimes = (trade.buy || [])
       .filter(
-        b => b.executed && b.executedOrder && b.executedOrder.transactTime
+        b =>
+          b.executed &&
+          b.executedOrder &&
+          (b.executedOrder.transactTime || b.executedOrder.updateTime)
       )
-      .map(b => b.executedOrder.transactTime);
+      .map(b => b.executedOrder.transactTime || b.executedOrder.updateTime);
 
     const startTime =
       buyTimes.length > 0
@@ -160,9 +163,12 @@ const queryTradeAnnotations = async (logger, annotation, symbol, from, to) => {
   if (activeGridTrade) {
     const activeBuyTimes = (activeGridTrade.buy || [])
       .filter(
-        b => b.executed && b.executedOrder && b.executedOrder.transactTime
+        b =>
+          b.executed &&
+          b.executedOrder &&
+          (b.executedOrder.transactTime || b.executedOrder.updateTime)
       )
-      .map(b => b.executedOrder.transactTime);
+      .map(b => b.executedOrder.transactTime || b.executedOrder.updateTime);
 
     if (activeBuyTimes.length > 0) {
       annotations.push({
