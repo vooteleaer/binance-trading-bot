@@ -2,7 +2,7 @@
   "title": "Trading Analysis",
   "uid": "binance-trading",
   "schemaVersion": 38,
-  "version": 5,
+  "version": 6,
   "refresh": "5m",
   "time": { "from": "now-30d", "to": "now" },
   "templating": {
@@ -11,7 +11,7 @@
         "name": "symbol",
         "label": "Symbol",
         "type": "query",
-        "datasource": "BinanceBot",
+        "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
         "query": "symbols",
         "definition": "symbols",
         "refresh": 2,
@@ -26,7 +26,7 @@
   "annotations": {
     "list": [
       {
-        "datasource": "BinanceBot",
+        "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
         "enable": true,
         "hide": false,
         "iconColor": "#e0752d",
@@ -34,7 +34,7 @@
         "query": "*"
       },
       {
-        "datasource": "BinanceBot",
+        "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
         "enable": true,
         "hide": false,
         "iconColor": "#5794F2",
@@ -42,7 +42,7 @@
         "query": "trades_$symbol"
       },
       {
-        "datasource": "BinanceBot",
+        "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
         "enable": true,
         "hide": false,
         "iconColor": "#FF9830",
@@ -57,7 +57,7 @@
       "title": "Price Chart — $symbol",
       "type": "candlestick",
       "gridPos": { "x": 0, "y": 0, "w": 24, "h": 12 },
-      "datasource": "BinanceBot",
+      "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
       "targets": [
         {
           "target": "candles_$symbol",
@@ -127,7 +127,7 @@
       "title": "Profit per Trade (USDC)",
       "type": "barchart",
       "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
-      "datasource": "BinanceBot",
+      "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
       "targets": [
         {
           "target": "profit",
@@ -160,7 +160,7 @@
       "title": "Cumulative Profit (USDC)",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
-      "datasource": "BinanceBot",
+      "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
       "targets": [
         {
           "target": "cumulative_profit",
@@ -184,7 +184,7 @@
       "title": "Profit % per Trade",
       "type": "barchart",
       "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
-      "datasource": "BinanceBot",
+      "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
       "targets": [
         {
           "target": "profit_pct",
@@ -213,7 +213,7 @@
       "title": "Trade Volume (USDC)",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
-      "datasource": "BinanceBot",
+      "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
       "targets": [
         {
           "target": "buy_qty",
