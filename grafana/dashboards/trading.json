@@ -2,7 +2,7 @@
   "title": "Trading Analysis",
   "uid": "binance-trading",
   "schemaVersion": 38,
-  "version": 6,
+  "version": 7,
   "refresh": "5m",
   "time": { "from": "now-30d", "to": "now" },
   "templating": {
@@ -11,7 +11,7 @@
         "name": "symbol",
         "label": "Symbol",
         "type": "query",
-        "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
+        "datasource": "BinanceBot",
         "query": "symbols",
         "definition": "symbols",
         "refresh": 2,
@@ -26,7 +26,7 @@
   "annotations": {
     "list": [
       {
-        "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
+        "datasource": "BinanceBot",
         "enable": true,
         "hide": false,
         "iconColor": "#e0752d",
@@ -34,7 +34,7 @@
         "query": "*"
       },
       {
-        "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
+        "datasource": "BinanceBot",
         "enable": true,
         "hide": false,
         "iconColor": "#5794F2",
@@ -42,7 +42,7 @@
         "query": "trades_$symbol"
       },
       {
-        "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
+        "datasource": "BinanceBot",
         "enable": true,
         "hide": false,
         "iconColor": "#FF9830",
@@ -57,7 +57,7 @@
       "title": "Price Chart — $symbol",
       "type": "candlestick",
       "gridPos": { "x": 0, "y": 0, "w": 24, "h": 12 },
-      "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
+      "datasource": "BinanceBot",
       "targets": [
         {
           "target": "candles_$symbol",
@@ -73,10 +73,16 @@
           "target": "sells_$symbol",
           "type": "timeserie",
           "refId": "C"
+        },
+        {
+          "target": "last_buy_price_$symbol",
+          "type": "timeserie",
+          "refId": "D"
         }
       ],
       "options": {
         "mode": "candles+volume",
+        "includeAllFields": true,
         "candleStyle": "candles",
         "colorStrategy": "open-close",
         "colors": {
@@ -118,6 +124,16 @@
               { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
               { "id": "custom.lineWidth", "value": 0 }
             ]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": "^last_buy_price_" },
+            "properties": [
+              { "id": "custom.drawStyle", "value": "line" },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [8, 4] } },
+              { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } },
+              { "id": "custom.fillOpacity", "value": 0 }
+            ]
           }
         ]
       }
@@ -127,7 +143,7 @@
       "title": "Profit per Trade (USDC)",
       "type": "barchart",
       "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
-      "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
+      "datasource": "BinanceBot",
       "targets": [
         {
           "target": "profit",
@@ -160,7 +176,7 @@
       "title": "Cumulative Profit (USDC)",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
-      "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
+      "datasource": "BinanceBot",
       "targets": [
         {
           "target": "cumulative_profit",
@@ -184,7 +200,7 @@
       "title": "Profit % per Trade",
       "type": "barchart",
       "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
-      "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
+      "datasource": "BinanceBot",
       "targets": [
         {
           "target": "profit_pct",
@@ -213,7 +229,7 @@
       "title": "Trade Volume (USDC)",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
-      "datasource": { "type": "simpod-json-datasource", "uid": "PED73A8C46BC1DB22" },
+      "datasource": "BinanceBot",
       "targets": [
         {
           "target": "buy_qty",

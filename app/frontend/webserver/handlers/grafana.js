@@ -201,6 +201,22 @@ const queryMetric = async (logger, target, from, to) => {
   return rows.map(row => [row[field] || 0, new Date(row.archivedAt).getTime()]);
 };
 
+const queryLastBuyPrice = async (logger, symbol, from) => {
+  const doc = await mongo.findOne(logger, 'trailing-trade-symbols', {
+    key: `${symbol}-last-buy-price`
+  });
+  const price = doc && doc.lastBuyPrice > 0 ? doc.lastBuyPrice : null;
+  if (!price) return { target: `last_buy_price_${symbol}`, datapoints: [] };
+  const start = from ? from.getTime() : Date.now() - 7 * 24 * 60 * 60 * 1000;
+  return {
+    target: `last_buy_price_${symbol}`,
+    datapoints: [
+      [price, start],
+      [price, Date.now()]
+    ]
+  };
+};
+
 const queryTradeAnnotations = async (logger, annotation, symbol, from, to) => {
   const archiveMatch = { symbol };
   if (from || to) {
@@ -385,6 +401,10 @@ const handleGrafana = async (funcLogger, app) => {
           if (target.startsWith('sells_')) {
             const symbol = target.slice('sells_'.length);
             return querySellMarkers(logger, symbol, from, to);
+          }
+          if (target.startsWith('last_buy_price_')) {
+            const symbol = target.slice('last_buy_price_'.length);
+            return queryLastBuyPrice(logger, symbol, from);
           }
           return {
             target,
