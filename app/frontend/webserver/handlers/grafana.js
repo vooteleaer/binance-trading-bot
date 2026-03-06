@@ -1,35 +1,5 @@
 const { mongo } = require('../../../helpers');
 
-// Patterns used to identify and label order events in trailing-trade-logs
-const ORDER_PATTERNS = [
-  {
-    pattern: /buy order has been placed/i,
-    title: '▲ Buy placed',
-    tags: ['buy', 'placed']
-  },
-  {
-    pattern: /sell order has been placed/i,
-    title: '▼ Sell placed',
-    tags: ['sell', 'placed']
-  },
-  {
-    pattern: /cancel current buy order|The buy order has been cancelled/i,
-    title: '✕ Buy cancelled',
-    tags: ['buy', 'cancelled']
-  },
-  {
-    pattern: /cancel current sell order|The sell order has been cancelled/i,
-    title: '✕ Sell cancelled',
-    tags: ['sell', 'cancelled']
-  }
-];
-
-// Combined regex for MongoDB $regex filter — derived from ORDER_PATTERNS
-const ORDER_LOG_REGEX = new RegExp(
-  ORDER_PATTERNS.map(p => p.pattern.source).join('|'),
-  'i'
-);
-
 const METRICS = [
   'profit',
   'profit_pct',
@@ -331,35 +301,90 @@ const queryTradeAnnotations = async (logger, annotation, symbol, from, to) => {
   return annotations;
 };
 
-const queryOrderAnnotations = async (logger, annotation, symbol, from, to) => {
-  const match = {
-    symbol,
-    msg: { $regex: ORDER_LOG_REGEX.source, $options: 'i' }
-  };
+const queryBuySellAnnotations = async (
+  logger,
+  annotation,
+  symbol,
+  from,
+  to
+) => {
+  const match = { symbol };
   if (from || to) {
-    match.loggedAt = {
-      ...(from ? { $gte: from } : {}),
-      ...(to ? { $lte: to } : {})
+    match.archivedAt = {
+      ...(from ? { $gte: from.toISOString() } : {}),
+      ...(to ? { $lte: to.toISOString() } : {})
     };
   }
 
-  const logs = await mongo.findAll(logger, 'trailing-trade-logs', match, {
-    sort: { loggedAt: 1 }
+  const trades = await mongo.findAll(
+    logger,
+    'trailing-trade-grid-trade-archive',
+    match,
+    { sort: { archivedAt: 1 } }
+  );
+
+  const annotations = [];
+
+  trades.forEach(trade => {
+    (trade.buy || [])
+      .filter(b => b.executed && b.executedOrder)
+      .forEach(b => {
+        const t = getOrderTime(b.executedOrder);
+        const price = getOrderFillPrice(b.executedOrder);
+        if (t) {
+          annotations.push({
+            annotation,
+            time: t,
+            title: '▲ Buy',
+            text: price ? `${symbol} bought at ${price.toFixed(4)}` : symbol,
+            tags: ['buy', symbol]
+          });
+        }
+      });
+
+    (trade.sell || [])
+      .filter(s => s.executed && s.executedOrder)
+      .forEach(s => {
+        const t = getOrderTime(s.executedOrder);
+        const price = getOrderFillPrice(s.executedOrder);
+        if (t) {
+          annotations.push({
+            annotation,
+            time: t,
+            title: '▼ Sell',
+            text: price ? `${symbol} sold at ${price.toFixed(4)}` : symbol,
+            tags: ['sell', symbol]
+          });
+        }
+      });
   });
 
-  return logs
-    .map(log => {
-      const matched = ORDER_PATTERNS.find(p => p.pattern.test(log.msg));
-      if (!matched) return null;
-      return {
-        annotation,
-        time: new Date(log.loggedAt).getTime(),
-        title: matched.title,
-        text: log.msg,
-        tags: matched.tags
-      };
-    })
-    .filter(Boolean);
+  // Include buys from the currently active trade
+  const activeGridTrade = await mongo.findOne(
+    logger,
+    'trailing-trade-grid-trade',
+    { key: symbol }
+  );
+
+  if (activeGridTrade) {
+    (activeGridTrade.buy || [])
+      .filter(b => b.executed && b.executedOrder)
+      .forEach(b => {
+        const t = getOrderTime(b.executedOrder);
+        const price = getOrderFillPrice(b.executedOrder);
+        if (t) {
+          annotations.push({
+            annotation,
+            time: t,
+            title: '▲ Buy (active)',
+            text: price ? `${symbol} bought at ${price.toFixed(4)}` : symbol,
+            tags: ['buy', 'active', symbol]
+          });
+        }
+      });
+  }
+
+  return annotations;
 };
 
 const handleGrafana = async (funcLogger, app) => {
@@ -436,7 +461,7 @@ const handleGrafana = async (funcLogger, app) => {
       if (query.startsWith('orders_')) {
         const symbol = query.slice('orders_'.length);
         return res.json(
-          await queryOrderAnnotations(logger, annotation, symbol, from, to)
+          await queryBuySellAnnotations(logger, annotation, symbol, from, to)
         );
       }
 
