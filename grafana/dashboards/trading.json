@@ -32,6 +32,22 @@
         "iconColor": "#e0752d",
         "name": "Completed Trades",
         "query": "*"
+      },
+      {
+        "datasource": "BinanceBot",
+        "enable": true,
+        "hide": false,
+        "iconColor": "#5794F2",
+        "name": "Trade Regions",
+        "query": "trades_$symbol"
+      },
+      {
+        "datasource": "BinanceBot",
+        "enable": true,
+        "hide": false,
+        "iconColor": "#FF9830",
+        "name": "Order Events",
+        "query": "orders_$symbol"
       }
     ]
   },
