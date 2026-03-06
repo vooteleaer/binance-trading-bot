@@ -2,7 +2,7 @@
   "title": "Trading Analysis",
   "uid": "binance-trading",
   "schemaVersion": 38,
-  "version": 2,
+  "version": 3,
   "refresh": "5m",
   "time": { "from": "now-30d", "to": "now" },
   "templating": {
