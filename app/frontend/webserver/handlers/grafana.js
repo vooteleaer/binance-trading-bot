@@ -161,6 +161,8 @@ const queryTradeAnnotations = async (logger, annotation, symbol, from, to) => {
     { key: symbol }
   );
 
+  let activeTradeAdded = false;
+
   if (activeGridTrade) {
     const getBuyTime = b =>
       b.executedOrder &&
@@ -173,7 +175,6 @@ const queryTradeAnnotations = async (logger, annotation, symbol, from, to) => {
     );
 
     const activeBuyTimes = executedBuys.map(getBuyTime).filter(Boolean);
-
     const tradeStartTime =
       activeBuyTimes.length > 0 ? Math.min(...activeBuyTimes) : null;
 
@@ -186,8 +187,8 @@ const queryTradeAnnotations = async (logger, annotation, symbol, from, to) => {
         text: `${symbol} — in progress`,
         tags: ['trade', 'active', symbol]
       });
+      activeTradeAdded = true;
     } else if (executedBuys.length > 0) {
-      // Executed buys exist but no timestamp — fall back to view start
       annotations.push({
         annotation,
         time: from ? from.getTime() : Date.now() - 24 * 60 * 60 * 1000,
@@ -196,23 +197,26 @@ const queryTradeAnnotations = async (logger, annotation, symbol, from, to) => {
         text: `${symbol} — in progress`,
         tags: ['trade', 'active', symbol]
       });
-    } else {
-      // No executed buys in grid trade — check lastBuyPrice as last resort
-      const lastBuyPriceDoc = await mongo.findOne(
-        logger,
-        'trailing-trade-symbols',
-        { key: `${symbol}-last-buy-price` }
-      );
-      if (lastBuyPriceDoc && lastBuyPriceDoc.lastBuyPrice > 0) {
-        annotations.push({
-          annotation,
-          time: from ? from.getTime() : Date.now() - 24 * 60 * 60 * 1000,
-          timeEnd: Date.now(),
-          title: 'Active trade',
-          text: `${symbol} — in progress`,
-          tags: ['trade', 'active', symbol]
-        });
-      }
+      activeTradeAdded = true;
+    }
+  }
+
+  // Last resort: if no annotation added yet, detect active trade via lastBuyPrice
+  if (!activeTradeAdded) {
+    const lastBuyPriceDoc = await mongo.findOne(
+      logger,
+      'trailing-trade-symbols',
+      { key: `${symbol}-last-buy-price` }
+    );
+    if (lastBuyPriceDoc && lastBuyPriceDoc.lastBuyPrice > 0) {
+      annotations.push({
+        annotation,
+        time: from ? from.getTime() : Date.now() - 24 * 60 * 60 * 1000,
+        timeEnd: Date.now(),
+        title: 'Active trade',
+        text: `${symbol} — in progress`,
+        tags: ['trade', 'active', symbol]
+      });
     }
   }
 
