@@ -127,13 +127,14 @@ const queryTradeAnnotations = async (logger, annotation, symbol, from, to) => {
 
   const annotations = trades.map(trade => {
     const buyTimes = (trade.buy || [])
-      .filter(
+      .filter(b => b.executed && b.executedOrder)
+      .map(
         b =>
-          b.executed &&
-          b.executedOrder &&
-          (b.executedOrder.transactTime || b.executedOrder.updateTime)
+          b.executedOrder.transactTime ||
+          b.executedOrder.updateTime ||
+          b.executedOrder.time
       )
-      .map(b => b.executedOrder.transactTime || b.executedOrder.updateTime);
+      .filter(Boolean);
 
     const startTime =
       buyTimes.length > 0
@@ -161,24 +162,57 @@ const queryTradeAnnotations = async (logger, annotation, symbol, from, to) => {
   );
 
   if (activeGridTrade) {
-    const activeBuyTimes = (activeGridTrade.buy || [])
-      .filter(
-        b =>
-          b.executed &&
-          b.executedOrder &&
-          (b.executedOrder.transactTime || b.executedOrder.updateTime)
-      )
-      .map(b => b.executedOrder.transactTime || b.executedOrder.updateTime);
+    const getBuyTime = b =>
+      b.executedOrder &&
+      (b.executedOrder.transactTime ||
+        b.executedOrder.updateTime ||
+        b.executedOrder.time);
 
-    if (activeBuyTimes.length > 0) {
+    const executedBuys = (activeGridTrade.buy || []).filter(
+      b => b.executed && b.executedOrder
+    );
+
+    const activeBuyTimes = executedBuys.map(getBuyTime).filter(Boolean);
+
+    const tradeStartTime =
+      activeBuyTimes.length > 0 ? Math.min(...activeBuyTimes) : null;
+
+    if (tradeStartTime !== null) {
       annotations.push({
         annotation,
-        time: Math.min(...activeBuyTimes),
+        time: tradeStartTime,
         timeEnd: Date.now(),
         title: 'Active trade',
         text: `${symbol} — in progress`,
         tags: ['trade', 'active', symbol]
       });
+    } else if (executedBuys.length > 0) {
+      // Executed buys exist but no timestamp — fall back to view start
+      annotations.push({
+        annotation,
+        time: from ? from.getTime() : Date.now() - 24 * 60 * 60 * 1000,
+        timeEnd: Date.now(),
+        title: 'Active trade',
+        text: `${symbol} — in progress`,
+        tags: ['trade', 'active', symbol]
+      });
+    } else {
+      // No executed buys in grid trade — check lastBuyPrice as last resort
+      const lastBuyPriceDoc = await mongo.findOne(
+        logger,
+        'trailing-trade-symbols',
+        { key: `${symbol}-last-buy-price` }
+      );
+      if (lastBuyPriceDoc && lastBuyPriceDoc.lastBuyPrice > 0) {
+        annotations.push({
+          annotation,
+          time: from ? from.getTime() : Date.now() - 24 * 60 * 60 * 1000,
+          timeEnd: Date.now(),
+          title: 'Active trade',
+          text: `${symbol} — in progress`,
+          tags: ['trade', 'active', symbol]
+        });
+      }
     }
   }
 
